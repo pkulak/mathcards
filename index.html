@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8"/>
+  <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css"
+      crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+<body style="margin: 10px">
+  <div id="app">
+    <form v-on:submit.prevent="submitAnswer">
+      {{ card.display }} <input autocomplete="off" type="text" id="answer" v-model="answer"/>
+      <input type="submit" value="Submit">
+      <div v-if="showMessage" style="margin: 10px 0;">
+        <p v-if="correct">You got it! 😊</p>
+        <p v-else>Actually, it's <b>{{ card.answer }}</b>. 😞</p>
+      </div>
+      <p>SCORE: {{ score }}</p>
+    </form>
+  </div>
+  <script type="application/javascript">
+    class Card {
+      constructor(a, b) {
+        this.a = a;
+        this.b = b;
+        
+        this.known = false;
+        this.seen = false;
+
+        this.display = a + " x " + b + " =";
+        this.answer = a * b;
+      }
+
+      check(input) {
+        this.known = (input == this.a * this.b);
+        this.seen = true;
+        return this.known
+      }
+    }
+
+    const makeScore = (hits, misses) => {
+      if (hits + misses == 0) {
+        return 1;
+      }
+
+      return hits / (hits + misses);
+    }
+
+    const makeMultiplicationCards = () => {
+      const cards = [];
+
+      for (i = 0; i <= 12; i++) {
+        for (j = 0; j <= 12; j++) {
+          cards.push(new Card(i, j));
+        }
+      }
+
+      return cards;
+    }
+
+    const target = 0.8;
+    const cards = makeMultiplicationCards();
+    
+    const chooseNextCard = (currentCard, score) => {
+      const seen = cards.filter(card => card.seen);
+
+      if (seen.length == 0) {
+        return cards[0];
+      }
+
+      shuffle(seen);
+
+      for (var i = 0; i < seen.length; i++) {
+        if (seen[i] == currentCard) continue;
+
+        if (score < target && seen[i].known) {
+          return seen[i];
+        }
+
+        if (score >= target && !seen[i].known) {
+          return seen[i];
+        }
+      }
+
+      if (score < target) {
+        return seen[0];
+      }
+
+      if (score >= target) {
+        return cards.find(card => !card.seen);
+      }
+    }
+
+    var app = new Vue({
+      el: '#app',
+      data: {
+        answer: "",
+        card: cards[0],
+        correct: false,
+        showMessage: false,
+        hits: 0,
+        misses: 0,
+        score: 1
+      },
+      methods: {
+        submitAnswer: function() {
+          if (this.card.check(this.answer)) {
+            this.hits++;
+            this.correct = true;
+          } else {
+            this.misses++;
+            this.correct = false;
+          }
+
+          this.showMessage = true;
+          this.score = makeScore(this.hits, this.misses);
+          this.card = chooseNextCard(this.card, this.score);
+          this.answer = "";
+        }
+      }
+    });
+
+    // https://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array
+    function shuffle(array) {
+      let counter = array.length;
+
+      while (counter > 0) {
+        let index = Math.floor(Math.random() * counter);
+        counter--;
+
+        let temp = array[counter];
+        array[counter] = array[index];
+        array[index] = temp;
+      }
+
+      return array;
+    }
+  </script>
+</body>
+</html>
