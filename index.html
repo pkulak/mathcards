@@ -15,7 +15,7 @@
       <input type="submit" value="Submit">
       <div v-if="showMessage" style="margin: 10px 0;">
         <p v-if="correct">You got it! 😊</p>
-        <p v-else>Actually, it's <b>{{ card.answer }}</b>. 😞</p>
+        <p v-else>Actually, it's <b>{{ lastCard.answer }}</b>. 😞</p>
       </div>
     </form>
   </div>
@@ -97,6 +97,7 @@
       data: {
         answer: "",
         card: chooseNextCard(cards[0], 1),
+        lastCard: null,
         correct: false,
         showMessage: false,
         lastAnswers: [],
@@ -108,6 +109,7 @@
           this.recordAnswer(this.correct);
           this.showMessage = true;
           this.score = this.getScore();
+          this.lastCard = this.card;
           this.card = chooseNextCard(this.card, this.score);
           this.answer = "";
         },
