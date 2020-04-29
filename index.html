@@ -17,7 +17,6 @@
         <p v-if="correct">You got it! 😊</p>
         <p v-else>Actually, it's <b>{{ card.answer }}</b>. 😞</p>
       </div>
-      <p>SCORE: {{ score }}</p>
     </form>
   </div>
   <script type="application/javascript">
@@ -26,8 +25,8 @@
         this.a = a;
         this.b = b;
         
-        this.known = false;
-        this.seen = false;
+        this.known = a < 2 || b < 2;
+        this.seen = this.known;
 
         this.display = a + " x " + b + " =";
         this.answer = a * b;
@@ -97,27 +96,34 @@
       el: '#app',
       data: {
         answer: "",
-        card: cards[0],
+        card: chooseNextCard(cards[0], 1),
         correct: false,
         showMessage: false,
-        hits: 0,
-        misses: 0,
+        lastAnswers: [],
         score: 1
       },
       methods: {
         submitAnswer: function() {
-          if (this.card.check(this.answer)) {
-            this.hits++;
-            this.correct = true;
-          } else {
-            this.misses++;
-            this.correct = false;
-          }
-
+          this.correct = this.card.check(this.answer);
+          this.recordAnswer(this.correct);
           this.showMessage = true;
-          this.score = makeScore(this.hits, this.misses);
+          this.score = this.getScore();
           this.card = chooseNextCard(this.card, this.score);
           this.answer = "";
+        },
+        recordAnswer: function(answer) {
+          this.lastAnswers.push(answer);
+
+          if (this.lastAnswers.length > 10) {
+            this.lastAnswers.shift();
+          }
+
+          console.log(this.lastAnswers);
+        },
+        getScore: function() {
+          const hits = this.lastAnswers.filter(h => h).length;
+          const misses = this.lastAnswers.filter(h => !h).length;
+          return makeScore(hits, misses);
         }
       }
     });
